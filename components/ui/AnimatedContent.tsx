@@ -48,6 +48,7 @@ const AnimatedContent: React.FC<AnimatedContentProps> = ({
   ...props
 }) => {
   const ref = useRef<HTMLDivElement>(null);
+  const isInitialLoadRef = useRef(true);
 
   useEffect(() => {
     const el = ref.current;
@@ -66,42 +67,73 @@ const AnimatedContent: React.FC<AnimatedContentProps> = ({
     }
 
     const axis = direction === 'horizontal' ? 'x' : 'y';
-    const offset = reverse ? -distance : distance;
+    // Downwards scroll: element enters from bottom/forward
+    const downEnterOffset = reverse ? -distance : distance;
+    // Upwards scroll: element enters from top/reverse
+    const upEnterOffset = reverse ? distance : -distance;
     const startPct = (1 - threshold) * 100;
 
     gsap.set(el, {
-      [axis]: offset,
+      [axis]: downEnterOffset,
       scale,
       opacity: animateOpacity ? initialOpacity : 1,
-      visibility: 'visible'
+      visibility: 'visible',
+      willChange: 'transform, opacity'
     });
 
-    const tl = gsap.timeline({
-      paused: true,
-      delay,
-      onComplete: () => {
-        if (onComplete) onComplete();
-        if (disappearAfter > 0) {
-          gsap.to(el, {
-            [axis]: reverse ? distance : -distance,
-            scale: 0.8,
-            opacity: animateOpacity ? initialOpacity : 0,
-            delay: disappearAfter,
-            duration: disappearDuration,
-            ease: disappearEase,
-            onComplete: () => onDisappearanceComplete?.()
-          });
+    const animateIn = (isEnteringFromTop: boolean) => {
+      gsap.killTweensOf(el);
+      const startOffset = isEnteringFromTop ? upEnterOffset : downEnterOffset;
+      // Stagger delay applies fully on first mount, snappier on subsequent scroll-enters
+      const appliedDelay = isInitialLoadRef.current ? delay : Math.min(delay, 0.15);
+
+      gsap.fromTo(
+        el,
+        {
+          [axis]: startOffset,
+          scale,
+          opacity: animateOpacity ? initialOpacity : 1
+        },
+        {
+          [axis]: 0,
+          scale: 1,
+          opacity: 1,
+          duration,
+          ease,
+          delay: appliedDelay,
+          overwrite: 'auto',
+          onComplete: () => {
+            isInitialLoadRef.current = false;
+            if (onComplete) onComplete();
+            if (disappearAfter > 0) {
+              gsap.to(el, {
+                [axis]: isEnteringFromTop ? downEnterOffset : upEnterOffset,
+                scale: 0.8,
+                opacity: animateOpacity ? initialOpacity : 0,
+                delay: disappearAfter,
+                duration: disappearDuration,
+                ease: disappearEase,
+                onComplete: () => onDisappearanceComplete?.()
+              });
+            }
+          }
         }
-      }
-    });
+      );
+    };
 
-    tl.to(el, {
-      [axis]: 0,
-      scale: 1,
-      opacity: 1,
-      duration,
-      ease
-    });
+    const animateOut = (isExitingToTop: boolean) => {
+      gsap.killTweensOf(el);
+      const targetOffset = isExitingToTop ? upEnterOffset : downEnterOffset;
+
+      gsap.to(el, {
+        [axis]: targetOffset,
+        scale,
+        opacity: animateOpacity ? initialOpacity : 0,
+        duration: 0.35,
+        ease: 'power2.in',
+        overwrite: 'auto'
+      });
+    };
 
     const matchMedia = gsap.matchMedia();
 
@@ -110,8 +142,13 @@ const AnimatedContent: React.FC<AnimatedContentProps> = ({
         trigger: el,
         scroller: scrollerTarget,
         start: `top ${startPct}%`,
-        once: true,
-        onEnter: () => tl.play()
+        end: 'bottom top',
+        fastScrollEnd: true,
+        anticipatePin: 0.4,
+        onEnter: () => animateIn(false),
+        onLeave: () => animateOut(true),
+        onEnterBack: () => animateIn(true),
+        onLeaveBack: () => animateOut(false)
       });
 
       return () => {
@@ -120,12 +157,12 @@ const AnimatedContent: React.FC<AnimatedContentProps> = ({
     });
 
     matchMedia.add("(prefers-reduced-motion: reduce)", () => {
-       gsap.set(el, { [axis]: 0, scale: 1, opacity: 1 });
+      gsap.set(el, { [axis]: 0, scale: 1, opacity: 1 });
     });
 
     return () => {
       matchMedia.revert();
-      tl.kill();
+      gsap.killTweensOf(el);
     };
   }, [
     container,

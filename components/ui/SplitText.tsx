@@ -42,7 +42,6 @@ const SplitText: React.FC<SplitTextProps> = ({
   onLetterAnimationComplete
 }) => {
   const ref = useRef<HTMLParagraphElement>(null);
-  const animationCompletedRef = useRef(false);
   const onCompleteRef = useRef(onLetterAnimationComplete);
   const [fontsLoaded, setFontsLoaded] = useState<boolean>(false);
 
@@ -66,8 +65,6 @@ const SplitText: React.FC<SplitTextProps> = ({
   useGSAP(
     () => {
       if (!ref.current || !text || !fontsLoaded) return;
-      // Prevent re-animation if already completed
-      if (animationCompletedRef.current) return;
       
       const el = ref.current as HTMLElement & {
         _rbsplitInstance?: GSAPSplitText;
@@ -106,49 +103,84 @@ const SplitText: React.FC<SplitTextProps> = ({
           if (!targets.length) targets = self.chars || self.words || self.lines;
         };
         
-        splitInstance = new GSAPSplitText(el, {
-          type: splitType,
-          smartWrap: true,
-          autoSplit: splitType === 'lines',
-          linesClass: 'split-line',
-          wordsClass: 'split-word',
-          charsClass: 'split-char',
-          reduceWhiteSpace: false,
-          onSplit: (self: GSAPSplitText) => {
-            assignTargets(self);
-            return gsap.fromTo(
+        try {
+          splitInstance = new GSAPSplitText(el, {
+            type: splitType,
+            smartWrap: true,
+            autoSplit: splitType === 'lines',
+            linesClass: 'split-line',
+            wordsClass: 'split-word',
+            charsClass: 'split-char',
+            reduceWhiteSpace: false
+          });
+
+          assignTargets(splitInstance);
+          el._rbsplitInstance = splitInstance;
+
+          const yOffset = typeof from.y === 'number' ? from.y : 35;
+          let isFirstRun = true;
+
+          // Initial hide of targets
+          gsap.set(targets, { opacity: 0, y: Math.abs(yOffset) });
+
+          const animateIn = (isEnteringFromTop: boolean) => {
+            gsap.killTweensOf(targets);
+            const startY = isEnteringFromTop ? -Math.abs(yOffset) : Math.abs(yOffset);
+            const appliedDelay = isFirstRun ? initialDelay / 1000 : 0.05;
+
+            gsap.fromTo(
               targets,
-              { ...from },
+              { ...from, y: startY, opacity: 0 },
               {
                 ...to,
-                delay: initialDelay / 1000,
+                y: 0,
+                opacity: 1,
+                delay: appliedDelay,
                 duration,
                 ease,
                 stagger: delay / 1000,
-                scrollTrigger: {
-                  trigger: el,
-                  start,
-                  once: true,
-                  fastScrollEnd: true,
-                  anticipatePin: 0.4
-                },
-                onComplete: () => {
-                  animationCompletedRef.current = true;
-                  onCompleteRef.current?.();
-                },
                 willChange: 'transform, opacity',
-                force3D: true
+                force3D: true,
+                overwrite: 'auto',
+                onComplete: () => {
+                  isFirstRun = false;
+                  onCompleteRef.current?.();
+                }
               }
             );
-          }
-        });
-        el._rbsplitInstance = splitInstance;
+          };
+
+          const animateOut = (isExitingToTop: boolean) => {
+            gsap.killTweensOf(targets);
+            const exitY = isExitingToTop ? -Math.abs(yOffset) : Math.abs(yOffset);
+            gsap.to(targets, {
+              y: exitY,
+              opacity: 0,
+              duration: 0.25,
+              ease: 'power2.in',
+              overwrite: 'auto'
+            });
+          };
+
+          ScrollTrigger.create({
+            trigger: el,
+            start,
+            end: 'bottom top',
+            fastScrollEnd: true,
+            anticipatePin: 0.4,
+            onEnter: () => animateIn(false),
+            onLeave: () => animateOut(true),
+            onEnterBack: () => animateIn(true),
+            onLeaveBack: () => animateOut(false)
+          });
+        } catch {
+          gsap.set(el, { opacity: 1, y: 0 });
+        }
       });
 
       matchMedia.add("(prefers-reduced-motion: reduce)", () => {
-         gsap.set(el, { opacity: 1, y: 0 }); // Just show it immediately
-         animationCompletedRef.current = true;
-         onCompleteRef.current?.();
+        gsap.set(el, { opacity: 1, y: 0 });
+        onCompleteRef.current?.();
       });
 
       return () => {
