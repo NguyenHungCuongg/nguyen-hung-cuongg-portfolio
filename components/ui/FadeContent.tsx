@@ -39,6 +39,7 @@ const FadeContent: React.FC<FadeContentProps> = ({
   ...props
 }) => {
   const ref = useRef<HTMLDivElement>(null);
+  const isInitialLoadRef = useRef(true);
 
   useEffect(() => {
     const el = ref.current;
@@ -56,34 +57,62 @@ const FadeContent: React.FC<FadeContentProps> = ({
 
     const startPct = (1 - threshold) * 100;
     const getSeconds = (val: number) => (val > 10 ? val / 1000 : val);
+    const yShift = 24;
 
     gsap.set(el, {
       autoAlpha: initialOpacity,
+      y: yShift,
       willChange: 'opacity, transform'
     });
 
-    const tl = gsap.timeline({
-      paused: true,
-      delay: getSeconds(delay),
-      onComplete: () => {
-        if (onComplete) onComplete();
-        if (disappearAfter > 0) {
-          gsap.to(el, {
-            autoAlpha: initialOpacity,
-            delay: getSeconds(disappearAfter),
-            duration: getSeconds(disappearDuration),
-            ease: disappearEase,
-            onComplete: () => onDisappearanceComplete?.()
-          });
-        }
-      }
-    });
+    const animateIn = (isEnteringFromTop: boolean) => {
+      gsap.killTweensOf(el);
+      const startY = isEnteringFromTop ? -yShift : yShift;
+      const appliedDelay = isInitialLoadRef.current ? getSeconds(delay) : Math.min(getSeconds(delay), 0.15);
 
-    tl.to(el, {
-      autoAlpha: 1,
-      duration: getSeconds(duration),
-      ease: ease
-    });
+      gsap.fromTo(
+        el,
+        {
+          autoAlpha: initialOpacity,
+          y: startY
+        },
+        {
+          autoAlpha: 1,
+          y: 0,
+          duration: getSeconds(duration),
+          ease: ease,
+          delay: appliedDelay,
+          overwrite: 'auto',
+          onComplete: () => {
+            isInitialLoadRef.current = false;
+            if (onComplete) onComplete();
+            if (disappearAfter > 0) {
+              gsap.to(el, {
+                autoAlpha: initialOpacity,
+                y: isEnteringFromTop ? yShift : -yShift,
+                delay: getSeconds(disappearAfter),
+                duration: getSeconds(disappearDuration),
+                ease: disappearEase,
+                onComplete: () => onDisappearanceComplete?.()
+              });
+            }
+          }
+        }
+      );
+    };
+
+    const animateOut = (isExitingToTop: boolean) => {
+      gsap.killTweensOf(el);
+      const targetY = isExitingToTop ? -yShift : yShift;
+
+      gsap.to(el, {
+        autoAlpha: initialOpacity,
+        y: targetY,
+        duration: 0.35,
+        ease: 'power2.in',
+        overwrite: 'auto'
+      });
+    };
 
     const matchMedia = gsap.matchMedia();
 
@@ -92,8 +121,13 @@ const FadeContent: React.FC<FadeContentProps> = ({
         trigger: el,
         scroller: scrollerTarget,
         start: `top ${startPct}%`,
-        once: true,
-        onEnter: () => tl.play()
+        end: 'bottom top',
+        fastScrollEnd: true,
+        anticipatePin: 0.4,
+        onEnter: () => animateIn(false),
+        onLeave: () => animateOut(true),
+        onEnterBack: () => animateIn(true),
+        onLeaveBack: () => animateOut(false)
       });
 
       return () => {
@@ -102,12 +136,11 @@ const FadeContent: React.FC<FadeContentProps> = ({
     });
     
     matchMedia.add("(prefers-reduced-motion: reduce)", () => {
-       gsap.set(el, { autoAlpha: 1 });
+      gsap.set(el, { autoAlpha: 1, y: 0 });
     });
 
     return () => {
       matchMedia.revert();
-      tl.kill();
       gsap.killTweensOf(el);
     };
   }, [
