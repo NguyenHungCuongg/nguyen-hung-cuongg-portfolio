@@ -67,3 +67,21 @@ export interface SiteConfig {
   navItems: NavItem[];
   socialLinks: SocialLink[];
 }
+
+export type ArtworkCategory = "book-cover" | "other";
+
+export interface ArtworkItem {
+  id: string;
+  title: string;
+  category: ArtworkCategory;
+  image: string;
+  year: string;
+  alt: string;
+  behanceUrl?: string;
+}
+
+export interface GalleryCategory {
+  id: ArtworkCategory;
+  label: string;
+}
+

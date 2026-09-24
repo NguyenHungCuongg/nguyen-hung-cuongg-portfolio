@@ -11,6 +11,7 @@ export const siteConfig: SiteConfig = {
     { label: "Projects", href: "/#projects" },
     { label: "Journey", href: "/#journey" },
     { label: "Skills", href: "/#skills" },
+    { label: "Gallery", href: "/gallery" },
   ],
   socialLinks: [
     {
