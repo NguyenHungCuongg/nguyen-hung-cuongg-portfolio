@@ -171,7 +171,7 @@ export const artworks: ArtworkItem[] = [
   {
     id: "other-3",
     category: "other",
-    image: "/images/gallery/other/a.jfif",
+    image: "/images/gallery/other/a.jpg",
     year: "2022",
     alt: "Digital Artwork",
   },
