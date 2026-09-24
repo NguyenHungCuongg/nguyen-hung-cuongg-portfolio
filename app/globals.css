@@ -124,3 +124,9 @@ html {
   scrollbar-width: thin;
   scrollbar-color: var(--nb-ink) transparent;
 }
+
+@media (min-width: 1024px) {
+  body {
+    zoom: 0.8; /* hoặc 0.85 tùy độ vừa mắt của bạn */
+  }
+}
