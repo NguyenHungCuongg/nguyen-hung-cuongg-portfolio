@@ -37,7 +37,6 @@ export function GalleryLightbox({
     () => false
   );
 
-
   const handlePrev = React.useCallback(() => {
     setCurrentIndex((prev) => {
       if (prev === null) return null;
@@ -78,9 +77,18 @@ export function GalleryLightbox({
   const currentArtwork = artworks[currentIndex];
   if (!currentArtwork) return null;
 
+  const prevArtwork =
+    artworks.length > 1
+      ? artworks[currentIndex > 0 ? currentIndex - 1 : artworks.length - 1]
+      : null;
+  const nextArtwork =
+    artworks.length > 1
+      ? artworks[currentIndex < artworks.length - 1 ? currentIndex + 1 : 0]
+      : null;
+
   const modalContent = (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/92 p-4 md:p-8 select-none"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/92 p-4 md:p-8 select-none transition-opacity duration-200"
       role="dialog"
       aria-modal="true"
       aria-label="Artwork viewer"
@@ -88,21 +96,47 @@ export function GalleryLightbox({
         if (e.target === e.currentTarget) onClose();
       }}
     >
+      {/* Hidden preloader for adjacent images */}
+      {prevArtwork && (
+        <div className="hidden" aria-hidden="true">
+          <Image
+            src={prevArtwork.image}
+            alt=""
+            width={1200}
+            height={1600}
+            priority
+          />
+        </div>
+      )}
+      {nextArtwork && (
+        <div className="hidden" aria-hidden="true">
+          <Image
+            src={nextArtwork.image}
+            alt=""
+            width={1200}
+            height={1600}
+            priority
+          />
+        </div>
+      )}
+
+      {/* Close button */}
       <button
         type="button"
         onClick={onClose}
-        className="absolute right-4 top-4 md:right-8 md:top-8 z-10 flex h-11 w-11 items-center justify-center border-[3px] border-white bg-white text-nb-ink transition-transform hover:-translate-y-1 focus-visible:outline-[3px] focus-visible:outline-offset-4 focus-visible:outline-nb-blue cursor-pointer"
+        className="absolute right-4 top-4 md:right-8 md:top-8 z-10 flex h-11 w-11 items-center justify-center border-[3px] border-white bg-white text-nb-ink shadow-[4px_4px_0_#fff] transition-all hover:-translate-y-1 active:translate-y-[2px] active:shadow-none focus-visible:outline-[3px] focus-visible:outline-offset-4 focus-visible:outline-nb-blue cursor-pointer"
         aria-label="Close"
       >
         <XIcon size={24} weight="bold" />
       </button>
 
+      {/* Prev / Next controls */}
       {artworks.length > 1 && (
         <>
           <button
             type="button"
             onClick={handlePrev}
-            className="absolute left-4 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center border-[3px] border-white bg-white text-nb-ink transition-transform hover:-translate-x-1 focus-visible:outline-[3px] focus-visible:outline-offset-4 focus-visible:outline-nb-blue cursor-pointer"
+            className="absolute left-4 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center border-[3px] border-white bg-white text-nb-ink shadow-[4px_4px_0_#fff] transition-all hover:-translate-x-1 active:translate-x-[2px] active:shadow-none focus-visible:outline-[3px] focus-visible:outline-offset-4 focus-visible:outline-nb-blue cursor-pointer"
             aria-label="Previous artwork"
           >
             <ArrowLeftIcon size={24} weight="bold" />
@@ -111,7 +145,7 @@ export function GalleryLightbox({
           <button
             type="button"
             onClick={handleNext}
-            className="absolute right-4 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center border-[3px] border-white bg-white text-nb-ink transition-transform hover:translate-x-1 focus-visible:outline-[3px] focus-visible:outline-offset-4 focus-visible:outline-nb-blue cursor-pointer"
+            className="absolute right-4 top-1/2 z-10 -translate-y-1/2 flex h-11 w-11 items-center justify-center border-[3px] border-white bg-white text-nb-ink shadow-[4px_4px_0_#fff] transition-all hover:translate-x-1 active:translate-x-[-2px] active:shadow-none focus-visible:outline-[3px] focus-visible:outline-offset-4 focus-visible:outline-nb-blue cursor-pointer"
             aria-label="Next artwork"
           >
             <ArrowRightIcon size={24} weight="bold" />
@@ -119,13 +153,16 @@ export function GalleryLightbox({
         </>
       )}
 
+      {/* Main Image Container */}
       <div className="relative w-full h-full max-w-[90vw] max-h-[90vh] flex items-center justify-center pointer-events-none">
         <Image
+          key={currentArtwork.id}
           src={currentArtwork.image}
           alt={currentArtwork.alt}
           fill
           priority
-          className="object-contain"
+          quality={85}
+          className="object-contain transition-opacity duration-200"
           sizes="(max-width: 1024px) 90vw, 90vw"
         />
       </div>
@@ -134,3 +171,4 @@ export function GalleryLightbox({
 
   return createPortal(modalContent, document.body);
 }
+
