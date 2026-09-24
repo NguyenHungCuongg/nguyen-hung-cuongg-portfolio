@@ -21,7 +21,7 @@ export function ArtworkCard({ artwork, onClick }: ArtworkCardProps) {
         "focus-visible:outline-[3px] focus-visible:outline-offset-4 focus-visible:outline-nb-blue",
         "mb-4 bg-nb-surface"
       )}
-      aria-label={`View ${artwork.title}`}
+      aria-label={artwork.alt || "View artwork"}
     >
       <div className="relative aspect-auto w-full">
         <Image
