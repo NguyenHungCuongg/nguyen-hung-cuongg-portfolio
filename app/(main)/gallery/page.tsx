@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { galleryCategories, artworks } from "@/data/gallery";
 import { GallerySection } from "@/components/sections/GallerySection";
 import { SectionHeading } from "@/components/ui/SectionHeading";
+import AnimatedContent from "@/components/ui/AnimatedContent";
 
 export const metadata: Metadata = {
   title: "Gallery | N4C",
@@ -12,12 +13,12 @@ export const metadata: Metadata = {
 export default function GalleryPage() {
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 py-8 md:px-8 md:py-16 lg:px-12">
-      <div className="mb-12 md:mb-16">
+      <AnimatedContent direction="vertical" distance={40} duration={0.6} className="mb-12 md:mb-16">
         <SectionHeading
           title="Gallery"
           subtitle="Selected artwork — book covers and digital pieces."
         />
-      </div>
+      </AnimatedContent>
 
       <div className="flex flex-col">
         {galleryCategories.map((category) => {
