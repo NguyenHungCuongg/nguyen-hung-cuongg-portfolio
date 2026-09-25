@@ -155,9 +155,9 @@ export function Hero() {
               <span className="bg-nb-yellow px-1 text-nb-ink">
                 high-performance
               </span>{" "}
-              systems and engaging digital experiences with a{" "}
-              <span className="text-nb-blue px-1">bold</span> and{" "}
-              <span className="text-nb-orange px-1">creative</span> edge.
+              backends and interactive frontend applications.{" "}
+              <span className="text-nb-orange">Clean</span> code,{" "}
+              <span className="text-nb-blue px-1">bold</span> designs.
             </p>
           </FadeContent>
 
@@ -177,12 +177,12 @@ export function Hero() {
               View Projects
             </Button>
             <Button
-              href="/contact"
+              href="/gallery"
               variant="secondary"
               size="lg"
               className="w-full sm:w-auto bg-nb-surface shadow-[6px_6px_0_var(--nb-ink)] hover:bg-nb-blue hover:text-nb-canvas hover:-translate-y-1 text-lg"
             >
-              Let&apos;s Connect
+              My Gallery
             </Button>
           </AnimatedContent>
         </div>

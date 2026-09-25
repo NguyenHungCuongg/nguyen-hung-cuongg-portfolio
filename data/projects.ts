@@ -36,7 +36,7 @@ export const projects: Project[] = [
     liveUrl: undefined,
     sourceUrl: "https://github.com/NguyenHungCuongg/Beeyond-Limits",
     overview:
-      "Beeyond Limits is a productivity extension that helps you break through distractions and push your focus to the next level. Inspired by the hardworking bee, it's time to fly beeyond procrastination and reach your true potential.",
+      "Beeyond Limits is a productivity extension built to block distractions and keep you in the zone. Inspired by the hardworking bee, it combines essential focus tools into one fast, accessible workflow.",
     features: [
       "Pomodoro Timer and Task List",
       "Website Blocker",
@@ -57,7 +57,7 @@ export const projects: Project[] = [
     liveUrl: undefined,
     sourceUrl: "https://github.com/NguyenHungCuongg/Trekker",
     overview:
-      "This mobile app is designed for travelers seeking a seamless experience in discovering and booking tours and accommodations. It provides a user-friendly interface, personalized recommendations, and secure payment options.",
+      "A mobile app for discovering and booking tours. It handles the full flow from personalized trip recommendations to secure payment processing, built with a smooth cross-platform UI.",
     features: [
       "Tour and Accommodation Discovery",
       "Booking and Payment Integration",
@@ -78,7 +78,7 @@ export const projects: Project[] = [
     sourceUrl:
       "https://github.com/NguyenHungCuongg/Cybergame-Management-System",
     overview:
-      "This system is designed for three groups: cybercafe owners who need efficient management tools, staff members who handle daily operations.",
+      "A desktop management system for cybercafes. It handles customer sessions, billing logic, and daily operations for both owners and staff members.",
     features: [
       "Customer Session Management",
       "Billing and Payment Processing",
