@@ -23,7 +23,7 @@ export const PolaroidDeck = ({ cards }: { cards: PolaroidCard[] }) => {
           <div
             className={`bg-nb-canvas p-2.5 sm:p-3 pb-8 sm:pb-12 border-[4px] border-nb-ink shadow-[6px_6px_0_var(--nb-ink)] transition-all duration-300 hover:scale-110 hover:-translate-y-4 cursor-pointer ${rotate}`}
           >
-            <div className="relative w-46 h-46 sm:w-36 sm:h-36 md:w-56 md:h-56 lg:w-60 lg:h-60 border-[3px] border-nb-ink overflow-hidden pointer-events-none">
+            <div className="relative w-36 h-36 md:w-56 md:h-56 lg:w-60 lg:h-60 border-[3px] border-nb-ink overflow-hidden pointer-events-none">
               <Image
                 src={src}
                 alt={caption}

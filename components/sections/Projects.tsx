@@ -127,9 +127,9 @@ export function Projects() {
                   <div className="flex-1 flex flex-col gap-6">
                     <h3
                       className={cn(
-                        "font-syne font-bold scale-y-125 text-4xl md:text-5xl lg:text-5xl leading-[0.95] uppercase transition-all ease-in-out duration-300",
+                        "font-syne font-bold scale-y-125 text-[min(1.875rem,8.5vw)] sm:text-4xl md:text-5xl lg:text-5xl leading-[0.95] uppercase break-words transition-all ease-in-out duration-300",
                         hoveredIndex === index
-                          ? "text-nb-yellow translate-x-3"
+                          ? "text-nb-yellow lg:translate-x-3"
                           : "text-nb-canvas translate-x-0",
                       )}
                     >

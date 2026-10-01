@@ -68,7 +68,7 @@ export interface SiteConfig {
   socialLinks: SocialLink[];
 }
 
-export type ArtworkCategory = "book-cover" | "other";
+export type ArtworkCategory = "book-cover" | "digital-painting" | "other";
 
 export interface ArtworkItem {
   id: string;
@@ -83,4 +83,3 @@ export interface GalleryCategory {
   id: ArtworkCategory;
   label: string;
 }
-

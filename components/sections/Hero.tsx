@@ -112,7 +112,7 @@ export function Hero() {
               initialDelay={0}
               duration={0.6}
               from={{ opacity: 0, y: 30 }}
-              className="text-[clamp(3.5rem,6vw,5rem)] font-bold text-nb-pink [text-shadow:4px_4px_0_var(--nb-ink)] mb-2 md:mb-0"
+              className="text-[min(3.5rem,14vw)] md:text-[clamp(3.5rem,6vw,5rem)] font-bold text-nb-pink [text-shadow:4px_4px_0_var(--nb-ink)] mb-2 md:mb-0"
             />
 
             <SplitText
@@ -122,7 +122,7 @@ export function Hero() {
               initialDelay={100}
               duration={0.6}
               from={{ opacity: 0, y: 30 }}
-              className="relative z-10 text-[clamp(4rem,7.5vw,6rem)] font-bold text-nb-ink bg-nb-yellow border-[4px] border-nb-ink px-6 py-0 shadow-[8px_8px_0_var(--nb-ink)] -rotate-2 my-2 md:my-0"
+              className="relative z-10 text-[min(4rem,11vw)] md:text-[clamp(4rem,7.5vw,6rem)] font-bold text-nb-ink bg-nb-yellow border-[4px] border-nb-ink px-6 py-0 shadow-[8px_8px_0_var(--nb-ink)] -rotate-2 my-2 md:my-0"
             />
 
             <SplitText
@@ -132,7 +132,7 @@ export function Hero() {
               initialDelay={200}
               duration={0.6}
               from={{ opacity: 0, y: 30 }}
-              className="text-[clamp(4.5rem,9.5vw,8rem)] font-bold text-nb-canvas [-webkit-text-stroke:3px_var(--nb-ink)] [text-shadow:5px_5px_0_var(--nb-ink)] mt-2 md:mt-0"
+              className="text-[min(4.5rem,13.5vw)] md:text-[clamp(4.5rem,9.5vw,8rem)] font-bold text-nb-canvas [-webkit-text-stroke:3px_var(--nb-ink)] [text-shadow:5px_5px_0_var(--nb-ink)] mt-2 md:mt-0"
             />
 
             <div className="flex items-center gap-4 mt-2 md:mt-0">
@@ -144,7 +144,7 @@ export function Hero() {
                 initialDelay={300}
                 duration={0.6}
                 from={{ opacity: 0, y: 30 }}
-                className="text-[clamp(3.5rem,7vw,6rem)] font-bold text-nb-blue [text-shadow:4px_4px_0_var(--nb-ink)]"
+                className="text-[min(3.5rem,14vw)] md:text-[clamp(3.5rem,7vw,6rem)] font-bold text-nb-blue [text-shadow:4px_4px_0_var(--nb-ink)]"
               />
             </div>
           </h1>

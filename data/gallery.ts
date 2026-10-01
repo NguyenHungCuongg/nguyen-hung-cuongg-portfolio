@@ -2,6 +2,7 @@ import type { ArtworkItem, GalleryCategory } from "@/types";
 
 export const galleryCategories: GalleryCategory[] = [
   { id: "book-cover", label: "Book Cover" },
+  { id: "digital-painting", label: "Digital Painting" },
   { id: "other", label: "Other" },
 ];
 
@@ -153,6 +154,55 @@ export const artworks: ArtworkItem[] = [
     image: "/images/gallery/book-cover/savaged-winds.jpg",
     year: "2023",
     alt: "Book Cover Design",
+  },
+  {
+    id: "book-cover-22",
+    category: "book-cover",
+    image: "/images/gallery/book-cover/the-pack-negotiator.jpg",
+    year: "2023",
+    alt: "Book Cover Design",
+  },
+  {
+    id: "book-cover-23",
+    category: "book-cover",
+    image: "/images/gallery/book-cover/ruining-a-rose.jpg",
+    year: "2023",
+    alt: "Book Cover Design",
+  },
+  {
+    id: "digital-painting-1",
+    category: "digital-painting",
+    image: "/images/gallery/digital-painting/portrait-study-1.jpg",
+    year: "2022",
+    alt: "Digital Artwork",
+  },
+  {
+    id: "digital-painting-2",
+    category: "digital-painting",
+    image: "/images/gallery/digital-painting/portrait-study-2.jpg",
+    year: "2022",
+    alt: "Digital Artwork",
+  },
+  {
+    id: "digital-painting-3",
+    category: "digital-painting",
+    image: "/images/gallery/digital-painting/portrait-study-3.jpg",
+    year: "2022",
+    alt: "Digital Artwork",
+  },
+  {
+    id: "digital-painting-4",
+    category: "digital-painting",
+    image: "/images/gallery/digital-painting/portrait-study-4.jpg",
+    year: "2022",
+    alt: "Digital Artwork",
+  },
+  {
+    id: "digital-painting-5",
+    category: "digital-painting",
+    image: "/images/gallery/digital-painting/still-life-study.jpg",
+    year: "2022",
+    alt: "Digital Artwork",
   },
   {
     id: "other-1",
