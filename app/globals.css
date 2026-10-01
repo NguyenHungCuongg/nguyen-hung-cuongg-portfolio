@@ -59,6 +59,8 @@ body {
   font-family: var(--font-space-grotesk), sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* clip (not hidden) so sticky elements keep working */
+  overflow-x: clip;
 }
 
 html {
