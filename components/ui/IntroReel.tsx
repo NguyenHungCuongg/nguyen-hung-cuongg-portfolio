@@ -4,28 +4,67 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ArrowRight } from "@phosphor-icons/react";
-import { projects } from "@/data/projects";
 import { cn } from "@/lib/utils";
 
 gsap.registerPlugin(useGSAP);
 
 // Keep in sync with the inline script in app/layout.tsx
 const STORAGE_KEY = "n4c-intro-seen";
-
-const FEATURED_STACK = [
-  "Java",
-  "Spring Boot",
-  "PostgreSQL",
-  "Redis",
-  "RabbitMQ",
-  "Docker",
-  "Next.js",
-  "TypeScript",
-];
-
 const REPLAY_EVENT = "n4c:replay-intro";
 
-const pad = (value: number) => String(value).padStart(2, "0");
+const BALL_SIZE = 80;
+const NAME = "CUONG";
+const TILE_COLORS = ["bg-nb-orange", "bg-nb-blue text-nb-cream", "bg-nb-pink", "bg-nb-green", "bg-nb-cream"];
+const STRIPE_COLORS = ["bg-nb-orange", "bg-nb-blue", "bg-nb-pink", "bg-nb-green", "bg-nb-cream"];
+const SHAPE_COLORS = ["bg-nb-yellow", "bg-nb-orange", "bg-nb-blue", "bg-nb-pink", "bg-nb-green"];
+const RING_COLORS = ["border-nb-orange", "border-nb-blue", "border-nb-pink"];
+const BLIND_TOKENS = ["--nb-yellow", "--nb-blue", "--nb-pink", "--nb-green", "--nb-cream", "--nb-orange"];
+
+const SHAPE_ROWS = 4;
+const SHAPE_COLUMNS = 6;
+const SHAPE_CLIPS = [
+  undefined, // circle (rounded-full)
+  undefined, // square
+  "polygon(50% 0, 100% 100%, 0 100%)",
+  "polygon(35% 0, 65% 0, 65% 35%, 100% 35%, 100% 65%, 65% 65%, 65% 100%, 35% 100%, 35% 65%, 0 65%, 0 35%, 35% 35%)",
+  "circle(50% at 50% 100%)",
+];
+
+const WORDS = [
+  { text: "THINK.", panel: "bg-nb-blue text-nb-cream" },
+  { text: "CODE.", panel: "bg-nb-orange text-nb-ink" },
+  { text: "DESIGN.", panel: "bg-nb-pink text-nb-ink" },
+  { text: "SHIP.", panel: "bg-nb-green text-nb-ink" },
+];
+const WORD_WIPES: gsap.TweenVars[] = [{ xPercent: -100 }, { yPercent: -100 }, { xPercent: 100 }, { yPercent: 100 }];
+const WORD_CHAR_FX: gsap.TweenVars[] = [
+  { scale: 0, duration: 0.35, stagger: 0.04, ease: "back.out(3)" },
+  { x: -120, skewX: 40, autoAlpha: 0, duration: 0.35, stagger: 0.04, ease: "expo.out" },
+  { y: -220, rotation: gsap.utils.random(-90, 90, 1, true), autoAlpha: 0, duration: 0.45, stagger: { each: 0.03, from: "random" }, ease: "bounce.out" },
+  { scale: 4, autoAlpha: 0, duration: 0.4, stagger: 0.03, ease: "expo.out" },
+];
+const WORD_STEP = 0.45;
+
+const RIBBONS = [
+  { text: "SOFTWARE ENGINEER ✦ ", className: "top-[14%] bg-nb-yellow text-nb-ink", rotate: -8 },
+  { text: "CODE ✦ DESIGN ✦ ", className: "top-[44%] bg-nb-ink text-nb-cream", rotate: 6 },
+  { text: "NGUYEN HUNG CUONG ✦ ", className: "top-[72%] bg-nb-pink text-nb-ink", rotate: -4 },
+];
+
+// Scale an element (from its centre) until it covers the whole viewport.
+// ponytail: 1.3 safety factor absorbs the desktop `body { zoom }` mismatch between rects and viewport.
+const coverScale = (element: Element) => {
+  const rect = element.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const reach = Math.max(
+    Math.hypot(centerX, centerY),
+    Math.hypot(window.innerWidth - centerX, centerY),
+    Math.hypot(centerX, window.innerHeight - centerY),
+    Math.hypot(window.innerWidth - centerX, window.innerHeight - centerY),
+  );
+  return ((reach * 2) / rect.width) * 1.3;
+};
 
 export const replayIntro = () => window.dispatchEvent(new Event(REPLAY_EVENT));
 
@@ -75,46 +114,85 @@ function IntroPlayer({ isReplay }: { isReplay: boolean }) {
         setIsDone(true);
       };
 
-      const tl = gsap.timeline({ defaults: { ease: "expo.out" }, onComplete: finish });
+      const tokens = getComputedStyle(html);
+      const blindColors = BLIND_TOKENS.map((token) => tokens.getPropertyValue(token).trim());
+      const shapeGrid = { grid: [SHAPE_ROWS, SHAPE_COLUMNS] as [number, number] };
+
+      const tl = gsap.timeline({ onComplete: finish });
       timelineRef.current = tl;
 
-      // 1 — N4C stamp on a yellow wipe
-      tl.to(".ir-s1", { scaleX: 1, duration: 0.6, ease: "expo.inOut" })
-        .from(".ir-s1-stamp", { scale: 2, autoAlpha: 0, duration: 0.45, ease: "back.out(2)" }, "-=0.1")
-        .from(".ir-s1-shadow", { x: -12, y: -12, duration: 0.2, ease: "power2.out" })
-        .from(".ir-s1-label", { y: 16, autoAlpha: 0, duration: 0.35 }, "<")
+      // A — ball drops, squashes, bounces, then bursts to fill the screen
+      tl.set(".a-scene", { autoAlpha: 1 })
+        .fromTo(".a-ball", { y: () => -window.innerHeight * 0.65 }, { y: 0, duration: 0.45, ease: "power2.in" })
+        .addLabel("impact")
+        .to(".a-ball", { scaleX: 1.5, scaleY: 0.55, duration: 0.08, ease: "power1.out" }, "impact")
+        .fromTo(".a-ring", { scale: 0, autoAlpha: 1 }, { scale: 1, duration: 0.8, stagger: 0.07, ease: "expo.out" }, "impact")
+        .to(".a-ring", { autoAlpha: 0, duration: 0.4, stagger: 0.07 }, "impact+=0.35")
+        .to(".a-ball", { y: -130, scaleX: 0.85, scaleY: 1.2, duration: 0.28, ease: "power2.out" }, "impact+=0.08")
+        .to(".a-ball", { y: 0, scaleX: 1, scaleY: 1, duration: 0.24, ease: "power2.in" })
+        .to(".a-ball", { scaleX: 1.3, scaleY: 0.7, duration: 0.06 })
+        .set(".a-ball", { transformOrigin: "50% 50%" })
+        .to(".a-ball", { scale: (_index: number, ball: Element) => coverScale(ball), duration: 0.5, ease: "expo.in" })
 
-        // 2 — name + role
-        .set(".ir-s2", { autoAlpha: 1 }, "+=0.25")
-        .to(".ir-s1", { yPercent: -100, duration: 0.6, ease: "expo.inOut" }, "<")
-        .from(".ir-s2-line", { yPercent: 110, duration: 0.7, stagger: 0.08 }, "-=0.25")
-        .from(".ir-s2-tag", { scaleX: 0, transformOrigin: "left center", duration: 0.45, ease: "expo.inOut" }, "-=0.4")
-        .to(".ir-s2-line", { yPercent: -110, duration: 0.45, stagger: 0.04, ease: "expo.in" }, "+=0.5")
-        .to(".ir-s2-tag", { autoAlpha: 0, duration: 0.2 }, "<")
+        // B — name tiles flip up, wave, then fall with gravity
+        .addLabel("b", "-=0.1")
+        .set(".b-scene", { autoAlpha: 1 }, "b")
+        .from(".b-tile", { rotationX: -100, yPercent: 60, autoAlpha: 0, transformPerspective: 600, transformOrigin: "50% 100%", duration: 0.55, stagger: 0.07, ease: "back.out(2)" }, "b")
+        .from(".b-label", { y: 20, autoAlpha: 0, duration: 0.3, ease: "expo.out" }, "b+=0.2")
+        .to(".b-tile", { y: -36, duration: 0.18, stagger: 0.05, ease: "power2.out", yoyo: true, repeat: 1 }, ">-0.05")
+        .to(".b-tile", { y: () => window.innerHeight, rotation: gsap.utils.random(-120, 120, 1, true), duration: 0.55, stagger: { each: 0.04, from: "random" }, ease: "power3.in" }, ">+0.1")
+        .to(".b-label", { autoAlpha: 0, duration: 0.2 }, "<")
 
-        // 3 — stack
-        .set(".ir-s3", { autoAlpha: 1 })
-        .from(".ir-s3-label", { y: 16, autoAlpha: 0, duration: 0.3 })
-        .from(".ir-s3-tag", { scale: 1.6, autoAlpha: 0, duration: 0.35, stagger: 0.07, ease: "back.out(2)" }, "<")
-        .to(".ir-s3-tag, .ir-s3-label", { y: -40, autoAlpha: 0, duration: 0.25, stagger: 0.02, ease: "power2.in" }, "+=0.35")
+        // C — colour stripes wipe, then a shape grid ripples and collapses
+        .addLabel("c", "<0.25")
+        .to(".c-stripe", { scaleY: 1, duration: 0.35, stagger: 0.05, ease: "expo.inOut" }, "c")
+        .set(".a-scene, .b-scene", { autoAlpha: 0 })
+        .set(".c-grid", { autoAlpha: 1 })
+        .set(".c-stripe", { transformOrigin: "50% 0%" })
+        .to(".c-stripe", { scaleY: 0, duration: 0.35, stagger: 0.05, ease: "expo.inOut" })
+        .from(".c-shape", { scale: 0, rotation: -180, duration: 0.45, stagger: { ...shapeGrid, from: "center", amount: 0.35 }, ease: "back.out(2)" }, "<0.1")
+        .to(".c-shape", { rotation: 180, duration: 0.4, stagger: { ...shapeGrid, from: "start", amount: 0.3 }, ease: "back.inOut(2)" }, "-=0.15")
+        .to(".c-shape", {
+          x: (_index: number, shape: Element) => {
+            const rect = shape.getBoundingClientRect();
+            return window.innerWidth / 2 - (rect.left + rect.width / 2);
+          },
+          y: (_index: number, shape: Element) => {
+            const rect = shape.getBoundingClientRect();
+            return window.innerHeight / 2 - (rect.top + rect.height / 2);
+          },
+          scale: 0,
+          duration: 0.4,
+          stagger: { ...shapeGrid, from: "edges", amount: 0.2 },
+          ease: "expo.in",
+        }, "-=0.05")
+        .addLabel("d", "-=0.15");
 
-        // 4 — project deck
-        .set(".ir-s4", { autoAlpha: 1 })
-        .from(".ir-s4-label", { y: 16, autoAlpha: 0, duration: 0.3 })
-        .from(".ir-s4-card", { x: () => window.innerWidth, duration: 0.45, stagger: 0.3 }, "<")
-        .to(".ir-s4-card, .ir-s4-label", { yPercent: -40, autoAlpha: 0, duration: 0.3, stagger: 0.04, ease: "power2.in" }, "+=0.4")
+      // D — kinetic words, each panel wipes in from a new side with its own letter treatment
+      WORDS.forEach((_word, index) => {
+        const at = `d+=${index * WORD_STEP}`;
+        tl.set(`.d-panel-${index}`, { autoAlpha: 1 }, at)
+          .from(`.d-panel-${index}`, { ...WORD_WIPES[index], duration: 0.4, ease: "expo.out" }, at)
+          .from(`.d-panel-${index} .d-char`, WORD_CHAR_FX[index], `d+=${index * WORD_STEP + 0.1}`);
+      });
 
-        // 5 — headline lockup
-        .set(".ir-s5", { autoAlpha: 1 })
-        .from(".ir-s5-title", { yPercent: 110, duration: 0.7 })
-        .from(".ir-s5-bar", { scaleX: 0, transformOrigin: "left center", duration: 0.5, ease: "expo.inOut" }, "-=0.4")
-        .from(".ir-s5-tagline", { y: 20, autoAlpha: 0, duration: 0.5 }, "-=0.3")
+      // E — diagonal ribbons slide across, N4C stamp springs in on top
+      tl.addLabel("e", `d+=${WORDS.length * WORD_STEP}`)
+        .set(".e-scene", { autoAlpha: 1 }, "e")
+        .from(".e-ribbon", { scaleY: 0, duration: 0.35, stagger: 0.08, ease: "expo.out" }, "e")
+        .fromTo(".e-track", { xPercent: (index: number) => (index % 2 ? -50 : 0) }, { xPercent: (index: number) => (index % 2 ? 0 : -50), duration: 2.4, ease: "none" }, "e")
+        .from(".e-stamp", { scale: 0, rotation: -25, duration: 0.8, ease: "elastic.out(1, 0.5)" }, "e+=0.25")
+        .from(".e-stamp-shadow", { x: -12, y: -12, duration: 0.2, ease: "power2.out" }, "e+=0.6")
 
-        // Exit — ink sheet covers, then lifts off to reveal the site
-        .addLabel("exit", "+=0.7")
-        .to(".ir-skip", { autoAlpha: 0, duration: 0.2 }, "exit")
-        .to(".ir-wipe", { yPercent: 0, duration: 0.5, ease: "expo.in" }, "exit")
-        .to(rootRef.current, { yPercent: -100, duration: 0.6, ease: "expo.inOut" });
+        // Exit — the orange dot swallows the screen, then colour blinds slide away to reveal the site
+        .addLabel("exit", "e+=1")
+        .to(".ir-skip, .ir-progress", { autoAlpha: 0, duration: 0.2 }, "exit")
+        .to(".f-dot", { scale: (_index: number, dot: Element) => coverScale(dot), duration: 0.5, ease: "expo.in" }, "exit")
+        .set(".f-blind", { autoAlpha: 1 })
+        .set(".a-scene, .b-scene, .c-grid, .d-panel, .e-scene", { autoAlpha: 0 })
+        .set(rootRef.current, { backgroundColor: "transparent" })
+        .to(".f-blind", { backgroundColor: (index: number) => blindColors[index], duration: 0.12, stagger: 0.03 })
+        .to(".f-blind", { xPercent: (index: number) => (index % 2 ? 100 : -100), duration: 0.55, stagger: 0.05, ease: "expo.in" }, ">0.05");
 
       tl.fromTo(".ir-progress", { scaleX: 0 }, { scaleX: 1, duration: tl.labels.exit, ease: "none" }, 0);
 
@@ -138,109 +216,117 @@ function IntroPlayer({ isReplay }: { isReplay: boolean }) {
       data-replay={isReplay || undefined}
       role="region"
       aria-label="Portfolio intro"
-      className="intro-reel fixed inset-0 z-[100] overflow-hidden bg-nb-canvas bg-grid-pattern text-nb-ink"
+      className="intro-reel fixed inset-0 z-[100] overflow-hidden bg-nb-ink text-nb-ink"
     >
-      {/* 2 — name + role */}
-      <div className="ir-s2 invisible absolute inset-0 flex flex-col justify-center px-6 md:px-16">
-        <span className="mb-4 block overflow-hidden">
-          <span className="ir-s2-line block font-mono text-sm font-semibold uppercase tracking-[0.2em] md:text-base">
-            {"// Hello, I'm"}
-          </span>
-        </span>
-        {["Nguyen", "Hung Cuong"].map((line) => (
-          <span key={line} className="block overflow-hidden">
-            <span className="ir-s2-line block font-syne text-[clamp(3.25rem,13vw,12rem)] font-extrabold uppercase leading-[0.95]">
-              {line}
-            </span>
-          </span>
+      {/* A — bounce & burst */}
+      <div className="a-scene invisible absolute inset-0">
+        {RING_COLORS.map((color) => (
+          <div
+            key={color}
+            className={cn("a-ring absolute left-1/2 top-1/2 -ml-[35vmin] -mt-[35vmin] size-[70vmin] rounded-full border-[6px]", color)}
+          />
         ))}
-        <span className="ir-s2-tag mt-6 self-start border-[3px] border-nb-ink bg-nb-yellow px-4 py-2 font-mono text-sm font-semibold uppercase shadow-nb md:text-lg">
-          Software Engineer · Ho Chi Minh City
-        </span>
+        <div
+          className="a-ball absolute left-1/2 top-1/2 rounded-full bg-nb-yellow"
+          style={{ width: BALL_SIZE, height: BALL_SIZE, marginLeft: -BALL_SIZE / 2, marginTop: -BALL_SIZE / 2, transformOrigin: "50% 100%" }}
+        />
       </div>
 
-      {/* 3 — stack */}
-      <div className="ir-s3 invisible absolute inset-0 flex flex-col items-center justify-center gap-8 px-6">
-        <p className="ir-s3-label font-mono text-sm font-semibold uppercase tracking-[0.2em] md:text-base">
-          01 — Stack
-        </p>
-        <ul className="flex max-w-4xl flex-wrap justify-center gap-3 md:gap-5">
-          {FEATURED_STACK.map((name, index) => (
-            <li
-              key={name}
+      {/* B — name tiles */}
+      <div className="b-scene invisible absolute inset-0 flex flex-col items-center justify-center gap-6">
+        <p className="b-label font-mono text-sm font-semibold uppercase tracking-[0.3em] md:text-lg">{"hello, i'm"}</p>
+        <div className="flex gap-2 md:gap-4">
+          {NAME.split("").map((letter, index) => (
+            <span
+              key={index}
               className={cn(
-                "ir-s3-tag border-[3px] border-nb-ink px-4 py-2 font-mono text-base font-semibold shadow-nb md:px-6 md:py-3 md:text-2xl",
-                index % 3 === 0 ? "bg-nb-yellow" : "bg-nb-surface",
+                "b-tile flex size-[clamp(3.5rem,15vmin,9rem)] items-center justify-center border-4 border-nb-ink font-syne text-[clamp(2.25rem,10vmin,6rem)] font-extrabold shadow-nb",
+                TILE_COLORS[index % TILE_COLORS.length],
               )}
             >
-              {name}
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* 4 — project deck */}
-      <div className="ir-s4 invisible absolute inset-0 flex flex-col items-center justify-center gap-8 px-6">
-        <p className="ir-s4-label font-mono text-sm font-semibold uppercase tracking-[0.2em] md:text-base">
-          02 — Selected work
-        </p>
-        <div className="relative h-56 w-full max-w-2xl md:h-64">
-          {projects.map((project, index) => (
-            <div
-              key={project.slug}
-              className="ir-s4-card absolute flex h-full w-[calc(100%-2.25rem)] flex-col justify-between border-4 border-nb-ink bg-nb-surface p-6 shadow-nb-lg md:p-8"
-              style={{ top: index * 12, left: index * 12 }}
-            >
-              <div className="flex items-center justify-between gap-4 font-mono text-xs font-semibold uppercase md:text-sm">
-                <span className="border-2 border-nb-ink bg-nb-yellow px-2 py-1">
-                  {pad(index + 1)} / {pad(projects.length)}
-                </span>
-                <span>{project.period}</span>
-              </div>
-              <p className="font-syne text-[clamp(1.5rem,4.5vw,2.75rem)] font-extrabold leading-tight">
-                {project.name}
-              </p>
-              <p className="font-mono text-xs md:text-sm">{project.techStack.join(" / ")}</p>
-            </div>
+              {letter}
+            </span>
           ))}
         </div>
       </div>
 
-      {/* 5 — headline lockup */}
-      <div className="ir-s5 invisible absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-        <span className="block overflow-hidden">
-          <span className="ir-s5-title block font-syne text-[clamp(2.75rem,10vw,9rem)] font-extrabold uppercase leading-[0.95]">
-            Software
-            <br />
-            Engineer
-          </span>
-        </span>
-        <span className="ir-s5-bar mt-5 block h-4 w-40 border-[3px] border-nb-ink bg-nb-yellow md:w-64" />
-        <p className="ir-s5-tagline mt-6 max-w-xl text-lg font-medium md:text-2xl">
-          Building scalable backend systems and modern applications.
-        </p>
+      {/* C — shape grid */}
+      <div className="c-grid invisible absolute inset-0 flex items-center justify-center">
+        <div className="grid grid-cols-6 gap-[3vmin]">
+          {Array.from({ length: SHAPE_ROWS * SHAPE_COLUMNS }, (_, index) => {
+            const shapeType = index % SHAPE_CLIPS.length;
+            return (
+              <div
+                key={index}
+                className={cn(
+                  "c-shape size-[11vmin]",
+                  SHAPE_COLORS[(index + Math.floor(index / SHAPE_COLUMNS)) % SHAPE_COLORS.length],
+                  shapeType === 0 && "rounded-full",
+                )}
+                style={{ clipPath: SHAPE_CLIPS[shapeType] }}
+              />
+            );
+          })}
+        </div>
       </div>
 
-      {/* 1 — N4C stamp (on top, wipes away to reveal scene 2) */}
-      <div
-        className="ir-s1 absolute inset-0 flex origin-left flex-col items-center justify-center gap-8 bg-nb-yellow"
-        style={{ transform: "scaleX(0)" }}
-      >
-        <div className="ir-s1-stamp relative">
-          <div className="ir-s1-shadow absolute left-3 top-3 h-full w-full bg-nb-ink" />
-          <div className="relative border-4 border-nb-ink bg-nb-surface px-8 py-4 font-syne text-[clamp(4rem,14vw,10rem)] font-extrabold leading-none md:px-12 md:py-6">
-            N4C
+      {/* C — colour stripes */}
+      <div className="pointer-events-none absolute inset-0 grid grid-cols-5">
+        {STRIPE_COLORS.map((color) => (
+          <div key={color} className={cn("c-stripe h-full", color)} style={{ transform: "scaleY(0)", transformOrigin: "50% 100%" }} />
+        ))}
+      </div>
+
+      {/* D — kinetic words */}
+      {WORDS.map((word, index) => (
+        <div
+          key={word.text}
+          className={cn(`d-panel d-panel-${index} invisible absolute inset-0 flex items-center justify-center overflow-hidden`, word.panel)}
+        >
+          <p className="font-syne text-[clamp(3rem,15vw,15rem)] font-extrabold leading-none">
+            {word.text.split("").map((char, charIndex) => (
+              <span key={charIndex} className="d-char inline-block">
+                {char}
+              </span>
+            ))}
+          </p>
+        </div>
+      ))}
+
+      {/* E — ribbons + stamp */}
+      <div className="e-scene invisible absolute inset-0">
+        {RIBBONS.map((ribbon) => (
+          <div
+            key={ribbon.text}
+            className={cn("e-ribbon absolute -left-1/4 w-[150%] overflow-hidden border-y-4 border-nb-ink py-2 md:py-3", ribbon.className)}
+            style={{ transform: `rotate(${ribbon.rotate}deg)` }}
+          >
+            <div className="e-track flex w-max whitespace-nowrap font-syne text-2xl font-extrabold md:text-4xl">
+              <span>{ribbon.text.repeat(8)}</span>
+              <span>{ribbon.text.repeat(8)}</span>
+            </div>
+          </div>
+        ))}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="e-stamp relative">
+            <div className="e-stamp-shadow absolute left-3 top-3 h-full w-full bg-nb-ink" />
+            <div className="relative border-4 border-nb-ink bg-nb-cream px-8 py-4 font-syne text-[clamp(4rem,14vw,10rem)] font-extrabold leading-none md:px-12 md:py-6">
+              N4C
+              <span className="f-dot ml-[0.06em] inline-block size-[0.2em] rounded-full bg-nb-orange" />
+            </div>
           </div>
         </div>
-        <p className="ir-s1-label font-mono text-sm font-semibold uppercase tracking-[0.3em] md:text-base">
-          Nguyen Hung Cuong · Portfolio
-        </p>
       </div>
 
-      <div className="ir-wipe absolute inset-0 bg-nb-ink" style={{ transform: "translateY(100%)" }} />
+      {/* Exit — blinds */}
+      <div className="pointer-events-none absolute inset-0 flex flex-col">
+        {BLIND_TOKENS.map((token) => (
+          <div key={token} className="f-blind invisible flex-1 bg-nb-orange" />
+        ))}
+      </div>
 
       <div
-        className="ir-progress absolute bottom-0 left-0 h-2 w-full origin-left bg-nb-ink"
+        className="ir-progress absolute bottom-0 left-0 h-2 w-full origin-left border-t-2 border-nb-ink bg-nb-surface"
         style={{ transform: "scaleX(0)" }}
       />
 
