@@ -228,12 +228,10 @@ function IntroPlayer({ isReplay }: { isReplay: boolean }) {
           "impact+=0.26",
         )
 
-        // B — name tiles flip up, ripple, then dip (anticipation) before dropping out
+        // B — name tiles flip up, hold, then hop up and fall out with gravity
         .addLabel("b", "-=0.1")
         .set(".b-scene", { autoAlpha: 1 }, "b")
-        // Flip, ripple and drop are scheduled so each tile finishes one move before the next starts:
-        // overlapping tweens on the same `y` fight each other and read as jerky.
-        // Perspective and origin go in a set: inside .from() GSAP would tween them too (perspective 1400px → 0 warps the tiles)
+        // Perspective and origin for the 3D flip-in entrance
         .set(
           ".b-tile",
           { transformPerspective: 1400, transformOrigin: "50% 100%" },
@@ -256,37 +254,40 @@ function IntroPlayer({ isReplay }: { isReplay: boolean }) {
           { y: 16, autoAlpha: 0, duration: 0.35, ease: "power3.out" },
           "b+=0.15",
         )
+        // Reset origin to center so tumbling rotation during the fall pivots around center of mass
+        .set(".b-tile", { transformOrigin: "50% 50%" }, "b+=0.82")
+        // Outro: letters hop up with snappy velocity and slight anticipation tilt
         .to(
           ".b-tile",
           {
-            y: -24,
-            duration: 0.13,
+            y: -50,
+            rotation: (i: number) => [-8, 6, -5, 7, -6][i],
+            duration: 0.2,
             stagger: 0.04,
-            ease: "sine.inOut",
-            yoyo: true,
-            repeat: 1,
-          },
-          "b+=0.55",
-        )
-        .to(
-          ".b-tile",
-          {
-            y: () => window.innerHeight,
-            rotation: gsap.utils.random(-90, 90, 1, true),
-            duration: 0.5,
-            stagger: 0.04,
-            ease: "back.in(1.6)",
+            ease: "power2.out",
           },
           "b+=0.82",
         )
         .to(
           ".b-label",
-          { y: -16, autoAlpha: 0, duration: 0.25, ease: "power2.in" },
-          "<",
+          { y: -20, autoAlpha: 0, duration: 0.22, ease: "power2.in" },
+          "b+=0.82",
+        )
+        // From the apex of each tile's hop, accelerate downward under gravity with tumbling rotation
+        .to(
+          ".b-tile",
+          {
+            y: () => window.innerHeight + 150,
+            rotation: (i: number) => [-42, 32, -48, 38, -32][i],
+            duration: 0.45,
+            stagger: 0.04,
+            ease: "power2.in",
+          },
+          "<0.2",
         )
 
         // C — colour stripes sweep through, then a shape grid ripples and collapses
-        .addLabel("c", "<0.25")
+        .addLabel("c", "<0.22")
         .to(
           ".c-stripe",
           { scaleY: 1, duration: 0.32, stagger: 0.04, ease: "power4.inOut" },
