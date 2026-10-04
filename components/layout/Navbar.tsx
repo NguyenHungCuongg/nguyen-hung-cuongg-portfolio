@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { ListIcon, XIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
+import { replayIntro } from "@/components/ui/IntroReel";
 import { siteConfig } from "@/data/site-config";
 import { cn } from "@/lib/utils";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
@@ -77,7 +78,10 @@ export function Navbar() {
 
         {/* Right side Actions */}
         <div className="flex items-center">
-          <div className="hidden md:block">
+          <div className="hidden md:flex md:items-center md:gap-4">
+            <Button type="button" variant="secondary" size="default" onClick={replayIntro}>
+              Intro
+            </Button>
             <Button href="/contact" variant="primary" size="default">
               Contact Me
             </Button>
@@ -116,7 +120,19 @@ export function Navbar() {
                 </li>
               ))}
             </ul>
-            <div className="mt-4 border-t-[3px] border-nb-ink pt-6">
+            <div className="mt-4 grid gap-4 border-t-[3px] border-nb-ink pt-6">
+              <Button
+                type="button"
+                variant="secondary"
+                size="lg"
+                className="w-full"
+                onClick={() => {
+                  closeMenu();
+                  replayIntro();
+                }}
+              >
+                Intro
+              </Button>
               <Button
                 href="/contact"
                 variant="primary"

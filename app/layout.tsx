@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Syne, Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import { siteConfig } from "@/data/site-config";
+import { IntroReel } from "@/components/ui/IntroReel";
 import "./globals.css";
 
 const syne = Syne({
@@ -40,7 +41,16 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${syne.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
     >
+      <head>
+        {/* Hide the intro before paint on repeat visits in the same session (key shared with IntroReel) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(sessionStorage.getItem("n4c-intro-seen")==="1")document.documentElement.dataset.intro="seen"}catch(e){}`,
+          }}
+        />
+      </head>
       <body id="top" className="min-h-dvh font-space">
+        <IntroReel />
         {children}
       </body>
     </html>
