@@ -49,6 +49,7 @@
   --font-syne: var(--font-syne);
   --font-space: var(--font-space-grotesk);
   --font-mono: var(--font-jetbrains-mono);
+  --font-intro: var(--font-archivo-black);
 
   --animate-orbit: orbit 4s linear infinite;
 }
@@ -103,6 +104,16 @@ html {
   }
   100% {
     transform: rotate(360deg) translateX(20px) rotate(-360deg);
+  }
+}
+
+/* First-visit intro: skip on repeat visits and for reduced motion */
+html[data-intro="seen"] .intro-reel {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .intro-reel:not([data-replay]) {
+    display: none;
   }
 }
 

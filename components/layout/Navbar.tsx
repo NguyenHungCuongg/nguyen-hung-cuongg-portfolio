@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { ListIcon, XIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/Button";
+import { replayIntro } from "@/components/ui/IntroReel";
 import { siteConfig } from "@/data/site-config";
 import { cn } from "@/lib/utils";
 import { useScrollDirection } from "@/hooks/useScrollDirection";
@@ -59,6 +60,15 @@ export function Navbar() {
         {/* Desktop Nav */}
         <nav className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center">
           <ul className="flex items-center gap-6 lg:gap-8">
+            <li className="hover:scale-102 transition-transform">
+              <button
+                type="button"
+                onClick={replayIntro}
+                className="font-space text-base font-medium text-nb-ink hover:underline hover:font-bold cursor-pointer focus-visible:outline-[3px] focus-visible:outline-offset-4 focus-visible:outline-nb-blue"
+              >
+                Intro
+              </button>
+            </li>
             {siteConfig.navItems.map((item) => (
               <li
                 key={item.href}
@@ -77,7 +87,7 @@ export function Navbar() {
 
         {/* Right side Actions */}
         <div className="flex items-center">
-          <div className="hidden md:block">
+          <div className="hidden md:flex md:items-center md:gap-4">
             <Button href="/contact" variant="primary" size="default">
               Contact Me
             </Button>
@@ -104,6 +114,18 @@ export function Navbar() {
         <div className="fixed inset-0 top-[64px] z-40 flex flex-col border-t-[3px] border-nb-ink bg-nb-canvas p-6 md:hidden">
           <nav className="flex flex-col gap-6">
             <ul className="flex flex-col gap-4">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeMenu();
+                    replayIntro();
+                  }}
+                  className="block w-full text-left border-[3px] border-transparent p-2 font-syne text-2xl font-bold text-nb-ink hover:border-nb-ink focus-visible:border-nb-ink focus-visible:outline-none"
+                >
+                  Intro
+                </button>
+              </li>
               {siteConfig.navItems.map((item) => (
                 <li key={item.href}>
                   <Link
@@ -116,7 +138,7 @@ export function Navbar() {
                 </li>
               ))}
             </ul>
-            <div className="mt-4 border-t-[3px] border-nb-ink pt-6">
+            <div className="mt-4 grid gap-4 border-t-[3px] border-nb-ink pt-6">
               <Button
                 href="/contact"
                 variant="primary"

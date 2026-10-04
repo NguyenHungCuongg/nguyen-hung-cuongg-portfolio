@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { Syne, Space_Grotesk, JetBrains_Mono } from "next/font/google";
+import { Syne, Space_Grotesk, JetBrains_Mono, Archivo_Black } from "next/font/google";
 import { siteConfig } from "@/data/site-config";
+import { IntroReel } from "@/components/ui/IntroReel";
 import "./globals.css";
 
 const syne = Syne({
@@ -24,6 +25,14 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+// Intro reel only: heavy display face with taller proportions than Syne
+const archivoBlack = Archivo_Black({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-archivo-black",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: siteConfig.title,
   description: siteConfig.description,
@@ -38,9 +47,18 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${syne.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
+      className={`${syne.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} ${archivoBlack.variable}`}
     >
+      <head>
+        {/* Hide the intro before paint on repeat visits in the same session (key shared with IntroReel) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(sessionStorage.getItem("n4c-intro-seen")==="1")document.documentElement.dataset.intro="seen"}catch(e){}`,
+          }}
+        />
+      </head>
       <body id="top" className="min-h-dvh font-space">
+        <IntroReel />
         {children}
       </body>
     </html>
