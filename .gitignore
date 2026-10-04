@@ -47,3 +47,5 @@ next-env.d.ts
 /tasks
 .agents/
 .claude/
+# Playwright CLI output (may contain credentials)
+.playwright-cli/

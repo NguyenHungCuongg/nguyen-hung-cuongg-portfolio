@@ -49,6 +49,7 @@
   --font-syne: var(--font-syne);
   --font-space: var(--font-space-grotesk);
   --font-mono: var(--font-jetbrains-mono);
+  --font-intro: var(--font-archivo-black);
 
   --animate-orbit: orbit 4s linear infinite;
 }

@@ -43,7 +43,7 @@ const WORD_CHAR_FX: gsap.TweenVars[] = [
   { y: -220, rotation: gsap.utils.random(-90, 90, 1, true), autoAlpha: 0, duration: 0.45, stagger: { each: 0.03, from: "random" }, ease: "bounce.out" },
   { scale: 4, autoAlpha: 0, duration: 0.4, stagger: 0.03, ease: "expo.out" },
 ];
-const WORD_STEP = 0.45;
+const WORD_STEP = 0.42;
 
 const RIBBONS = [
   { text: "SOFTWARE ENGINEER ✦ ", className: "top-[14%] bg-nb-yellow text-nb-ink", rotate: -8 },
@@ -118,40 +118,44 @@ function IntroPlayer({ isReplay }: { isReplay: boolean }) {
       const blindColors = BLIND_TOKENS.map((token) => tokens.getPropertyValue(token).trim());
       const shapeGrid = { grid: [SHAPE_ROWS, SHAPE_COLUMNS] as [number, number] };
 
-      const tl = gsap.timeline({ onComplete: finish });
+      // Short pre-roll on the blank ink frame so the drop does not compete with page hydration
+      const tl = gsap.timeline({ delay: 0.3, onComplete: finish });
       timelineRef.current = tl;
 
-      // A — ball drops, squashes, bounces, then bursts to fill the screen
+      // A — ball stretches as it falls, squashes on impact, rebounds and swells to fill the screen.
+      // Squash/stretch tweens overlap the movement so the ball never stops dead between steps.
       tl.set(".a-scene", { autoAlpha: 1 })
-        .fromTo(".a-ball", { y: () => -window.innerHeight * 0.65 }, { y: 0, duration: 0.45, ease: "power2.in" })
+        .fromTo(".a-ball", { y: () => -window.innerHeight * 0.75, scaleX: 0.8, scaleY: 1.25 }, { y: 0, duration: 0.38, ease: "power2.in" })
         .addLabel("impact")
-        .to(".a-ball", { scaleX: 1.5, scaleY: 0.55, duration: 0.08, ease: "power1.out" }, "impact")
-        .fromTo(".a-ring", { scale: 0, autoAlpha: 1 }, { scale: 1, duration: 0.8, stagger: 0.07, ease: "expo.out" }, "impact")
-        .to(".a-ring", { autoAlpha: 0, duration: 0.4, stagger: 0.07 }, "impact+=0.35")
-        .to(".a-ball", { y: -130, scaleX: 0.85, scaleY: 1.2, duration: 0.28, ease: "power2.out" }, "impact+=0.08")
-        .to(".a-ball", { y: 0, scaleX: 1, scaleY: 1, duration: 0.24, ease: "power2.in" })
-        .to(".a-ball", { scaleX: 1.3, scaleY: 0.7, duration: 0.06 })
-        .set(".a-ball", { transformOrigin: "50% 50%" })
-        .to(".a-ball", { scale: (_index: number, ball: Element) => coverScale(ball), duration: 0.5, ease: "expo.in" })
+        .to(".a-ball", { scaleX: 1.45, scaleY: 0.6, duration: 0.1, ease: "power2.out" }, "impact")
+        .fromTo(".a-ring", { scale: 0, autoAlpha: 1 }, { scale: 1, duration: 0.7, stagger: 0.06, ease: "power3.out" }, "impact")
+        .to(".a-ring", { autoAlpha: 0, duration: 0.35, stagger: 0.06, ease: "sine.out" }, "impact+=0.3")
+        .to(".a-ball", { y: -90, scaleX: 0.9, scaleY: 1.12, duration: 0.24, ease: "power2.out" }, "impact+=0.08")
+        .set(".a-ball", { transformOrigin: "50% 50%" }, "impact+=0.26")
+        .to(".a-ball", { y: 0, scale: (_index: number, ball: Element) => coverScale(ball), duration: 0.45, ease: "power2.in" }, "impact+=0.26")
 
-        // B — name tiles flip up, wave, then fall with gravity
+        // B — name tiles flip up, ripple, then dip (anticipation) before dropping out
         .addLabel("b", "-=0.1")
         .set(".b-scene", { autoAlpha: 1 }, "b")
-        .from(".b-tile", { rotationX: -100, yPercent: 60, autoAlpha: 0, transformPerspective: 600, transformOrigin: "50% 100%", duration: 0.55, stagger: 0.07, ease: "back.out(2)" }, "b")
-        .from(".b-label", { y: 20, autoAlpha: 0, duration: 0.3, ease: "expo.out" }, "b+=0.2")
-        .to(".b-tile", { y: -36, duration: 0.18, stagger: 0.05, ease: "power2.out", yoyo: true, repeat: 1 }, ">-0.05")
-        .to(".b-tile", { y: () => window.innerHeight, rotation: gsap.utils.random(-120, 120, 1, true), duration: 0.55, stagger: { each: 0.04, from: "random" }, ease: "power3.in" }, ">+0.1")
-        .to(".b-label", { autoAlpha: 0, duration: 0.2 }, "<")
+        // Flip, ripple and drop are scheduled so each tile finishes one move before the next starts:
+        // overlapping tweens on the same `y` fight each other and read as jerky.
+        // Perspective and origin go in a set: inside .from() GSAP would tween them too (perspective 1400px → 0 warps the tiles)
+        .set(".b-tile", { transformPerspective: 1400, transformOrigin: "50% 100%" }, "b")
+        .from(".b-tile", { rotationX: -75, y: 60, autoAlpha: 0, duration: 0.6, stagger: 0.04, ease: "power3.out" }, "b")
+        .from(".b-label", { y: 16, autoAlpha: 0, duration: 0.35, ease: "power3.out" }, "b+=0.15")
+        .to(".b-tile", { y: -24, duration: 0.13, stagger: 0.04, ease: "sine.inOut", yoyo: true, repeat: 1 }, "b+=0.72")
+        .to(".b-tile", { y: () => window.innerHeight, rotation: gsap.utils.random(-90, 90, 1, true), duration: 0.5, stagger: 0.04, ease: "back.in(1.6)" }, "b+=1")
+        .to(".b-label", { y: -16, autoAlpha: 0, duration: 0.25, ease: "power2.in" }, "<")
 
-        // C — colour stripes wipe, then a shape grid ripples and collapses
+        // C — colour stripes sweep through, then a shape grid ripples and collapses
         .addLabel("c", "<0.25")
-        .to(".c-stripe", { scaleY: 1, duration: 0.35, stagger: 0.05, ease: "expo.inOut" }, "c")
+        .to(".c-stripe", { scaleY: 1, duration: 0.32, stagger: 0.04, ease: "power4.inOut" }, "c")
         .set(".a-scene, .b-scene", { autoAlpha: 0 })
         .set(".c-grid", { autoAlpha: 1 })
         .set(".c-stripe", { transformOrigin: "50% 0%" })
-        .to(".c-stripe", { scaleY: 0, duration: 0.35, stagger: 0.05, ease: "expo.inOut" })
-        .from(".c-shape", { scale: 0, rotation: -180, duration: 0.45, stagger: { ...shapeGrid, from: "center", amount: 0.35 }, ease: "back.out(2)" }, "<0.1")
-        .to(".c-shape", { rotation: 180, duration: 0.4, stagger: { ...shapeGrid, from: "start", amount: 0.3 }, ease: "back.inOut(2)" }, "-=0.15")
+        .to(".c-stripe", { scaleY: 0, duration: 0.32, stagger: 0.04, ease: "power4.inOut" })
+        .from(".c-shape", { scale: 0, rotation: -180, duration: 0.45, stagger: { ...shapeGrid, from: "center", amount: 0.3 }, ease: "back.out(1.7)" }, "<0.08")
+        .to(".c-shape", { rotation: 180, duration: 0.4, stagger: { ...shapeGrid, from: "start", amount: 0.25 }, ease: "power2.inOut" }, "-=0.2")
         .to(".c-shape", {
           x: (_index: number, shape: Element) => {
             const rect = shape.getBoundingClientRect();
@@ -162,9 +166,9 @@ function IntroPlayer({ isReplay }: { isReplay: boolean }) {
             return window.innerHeight / 2 - (rect.top + rect.height / 2);
           },
           scale: 0,
-          duration: 0.4,
-          stagger: { ...shapeGrid, from: "edges", amount: 0.2 },
-          ease: "expo.in",
+          duration: 0.35,
+          stagger: { ...shapeGrid, from: "edges", amount: 0.15 },
+          ease: "back.in(1.4)",
         }, "-=0.05")
         .addLabel("d", "-=0.15");
 
@@ -240,7 +244,7 @@ function IntroPlayer({ isReplay }: { isReplay: boolean }) {
             <span
               key={index}
               className={cn(
-                "b-tile flex size-[clamp(3.5rem,15vmin,9rem)] items-center justify-center border-4 border-nb-ink font-syne text-[clamp(2.25rem,10vmin,6rem)] font-extrabold shadow-nb",
+                "b-tile flex size-[clamp(3.5rem,15vmin,9rem)] items-center justify-center border-4 border-nb-ink font-intro text-[clamp(2.25rem,10vmin,6rem)] shadow-nb",
                 TILE_COLORS[index % TILE_COLORS.length],
               )}
             >
@@ -283,7 +287,7 @@ function IntroPlayer({ isReplay }: { isReplay: boolean }) {
           key={word.text}
           className={cn(`d-panel d-panel-${index} invisible absolute inset-0 flex items-center justify-center overflow-hidden`, word.panel)}
         >
-          <p className="font-syne text-[clamp(3rem,15vw,15rem)] font-extrabold leading-none">
+          <p className="font-intro text-[clamp(3rem,15vw,15rem)] leading-none">
             {word.text.split("").map((char, charIndex) => (
               <span key={charIndex} className="d-char inline-block">
                 {char}
@@ -301,7 +305,7 @@ function IntroPlayer({ isReplay }: { isReplay: boolean }) {
             className={cn("e-ribbon absolute -left-1/4 w-[150%] overflow-hidden border-y-4 border-nb-ink py-2 md:py-3", ribbon.className)}
             style={{ transform: `rotate(${ribbon.rotate}deg)` }}
           >
-            <div className="e-track flex w-max whitespace-nowrap font-syne text-2xl font-extrabold md:text-4xl">
+            <div className="e-track flex w-max whitespace-nowrap font-intro text-2xl md:text-4xl">
               <span>{ribbon.text.repeat(8)}</span>
               <span>{ribbon.text.repeat(8)}</span>
             </div>
@@ -310,7 +314,7 @@ function IntroPlayer({ isReplay }: { isReplay: boolean }) {
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="e-stamp relative">
             <div className="e-stamp-shadow absolute left-3 top-3 h-full w-full bg-nb-ink" />
-            <div className="relative border-4 border-nb-ink bg-nb-cream px-8 py-4 font-syne text-[clamp(4rem,14vw,10rem)] font-extrabold leading-none md:px-12 md:py-6">
+            <div className="relative border-4 border-nb-ink bg-nb-cream px-8 py-4 font-intro text-[clamp(4rem,14vw,10rem)] leading-none md:px-12 md:py-6">
               N4C
               <span className="f-dot ml-[0.06em] inline-block size-[0.2em] rounded-full bg-nb-orange" />
             </div>
